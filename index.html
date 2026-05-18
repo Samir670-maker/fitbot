@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>FitBot</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --green: #1D9E75;
+    --green-light: #E1F5EE;
+    --green-mid: #9FE1CB;
+    --blue: #378ADD;
+    --blue-light: #E6F1FB;
+    --amber: #EF9F27;
+    --amber-light: #FAEEDA;
+    --purple: #7F77DD;
+    --purple-light: #EEEDFE;
+    --red: #E24B4A;
+    --bg: #F4F4F4;
+    --card: #FFFFFF;
+    --text: #1a1a1a;
+    --text2: #666;
+    --text3: #999;
+    --border: rgba(0,0,0,0.08);
+    --radius: 14px;
+    --radius-sm: 10px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--tg-theme-bg-color, var(--bg));
+    color: var(--tg-theme-text-color, var(--text));
+    min-height: 100vh;
+    padding-bottom: 80px;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--tg-theme-secondary-bg-color, var(--card));
+    padding: 14px 16px 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 0.5px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .header-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--green);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .header h1 { font-size: 17px; font-weight: 600; }
+  .header p  { font-size: 12px; color: var(--text2); margin-top: 1px; }
+  .header-goal {
+    margin-left: auto;
+    background: var(--green-light);
+    color: var(--green);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+
+  /* SECTIONS */
+  .section { padding: 16px 16px 0; }
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 10px;
+  }
+
+  /* STATS GRID */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .stat-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 14px;
+    border: 0.5px solid var(--border);
+  }
+  .stat-icon { font-size: 18px; margin-bottom: 6px; }
+  .stat-label { font-size: 11px; color: var(--text2); margin-bottom: 2px; }
+  .stat-value { font-size: 20px; font-weight: 600; }
+  .stat-unit  { font-size: 12px; font-weight: 400; color: var(--text2); }
+  .stat-sub   { font-size: 11px; margin-top: 4px; }
+
+  /* PROGRESS CARD */
+  .prog-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 14px;
+    border: 0.5px solid var(--border);
+    margin-bottom: 10px;
+  }
+  .prog-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .prog-name { font-size: 13px; font-weight: 500; }
+  .prog-nums { font-size: 12px; color: var(--text2); }
+  .bar-bg {
+    height: 8px;
+    background: #f0f0f0;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s ease;
+  }
+
+  /* MACROS */
+  .macro-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .macro-item {
+    background: #f8f8f8;
+    border-radius: var(--radius-sm);
+    padding: 10px 8px;
+    text-align: center;
+  }
+  .macro-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin: 0 auto 5px;
+  }
+  .macro-val  { font-size: 15px; font-weight: 600; }
+  .macro-name { font-size: 10px; color: var(--text2); margin-top: 2px; }
+
+  /* WATER */
+  .water-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 14px;
+    border: 0.5px solid var(--border);
+    margin-bottom: 10px;
+  }
+  .water-drops {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin: 10px 0 8px;
+  }
+  .water-drop {
+    font-size: 22px;
+    transition: opacity 0.3s;
+  }
+  .water-drop.empty { opacity: 0.2; }
+
+  /* WEEK CHART */
+  .chart-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 14px;
+    border: 0.5px solid var(--border);
+    margin-bottom: 10px;
+  }
+  .chart-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 80px;
+    margin: 12px 0 6px;
+  }
+  .chart-bar-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    height: 100%;
+    justify-content: flex-end;
+  }
+  .chart-bar {
+    width: 100%;
+    border-radius: 4px 4px 0 0;
+    transition: height 0.5s ease;
+    min-height: 4px;
+  }
+  .chart-day { font-size: 10px; color: var(--text3); }
+  .chart-avg {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text2);
+    margin-top: 4px;
+  }
+
+  /* FOOD LOG */
+  .food-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+  .food-item {
+    background: var(--card);
+    border-radius: var(--radius-sm);
+    border: 0.5px solid var(--border);
+    padding: 12px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .food-name { font-size: 14px; font-weight: 500; }
+  .food-macros { font-size: 11px; color: var(--text2); margin-top: 2px; }
+  .food-cal { font-size: 14px; font-weight: 600; color: var(--green); }
+
+  /* BOTTOM NAV */
+  .nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--tg-theme-secondary-bg-color, var(--card));
+    border-top: 0.5px solid var(--border);
+    display: flex;
+    padding-bottom: env(safe-area-inset-bottom);
+    z-index: 20;
+  }
+  .nav-btn {
+    flex: 1;
+    padding: 10px 4px 12px;
+    text-align: center;
+    cursor: pointer;
+    border: none;
+    background: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .nav-btn .nav-icon { font-size: 22px; display: block; }
+  .nav-btn .nav-label { font-size: 10px; color: var(--text3); display: block; margin-top: 2px; }
+  .nav-btn.active .nav-icon { filter: none; }
+  .nav-btn.active .nav-label { color: var(--green); font-weight: 600; }
+
+  /* PROFILE PAGE */
+  .profile-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 16px;
+    border: 0.5px solid var(--border);
+    margin-bottom: 10px;
+  }
+  .profile-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 0.5px solid var(--border);
+    font-size: 14px;
+  }
+  .profile-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .profile-key { color: var(--text2); }
+  .profile-val { font-weight: 500; }
+
+  /* PAGES */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* LOADING */
+  .loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 60vh;
+    gap: 16px;
+    color: var(--text2);
+    font-size: 14px;
+  }
+  .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid #eee;
+    border-top-color: var(--green);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* EMPTY */
+  .empty {
+    text-align: center;
+    padding: 32px 16px;
+    color: var(--text2);
+    font-size: 14px;
+  }
+  .empty .emoji { font-size: 36px; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header" id="header">
+  <div class="header-avatar">💪</div>
+  <div>
+    <h1>FitBot</h1>
+    <p id="header-sub">Загрузка...</p>
+  </div>
+  <span class="header-goal" id="header-goal" style="display:none"></span>
+</div>
+
+<!-- СТРАНИЦА: ГЛАВНАЯ -->
+<div class="page active" id="page-home">
+  <div id="home-loading" class="loading">
+    <div class="spinner"></div>
+    <span>Загрузка данных...</span>
+  </div>
+  <div id="home-content" style="display:none">
+
+    <div class="section" style="padding-top:16px;">
+      <div class="section-label">Сегодня</div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">🔥</div>
+          <div class="stat-label">Калории</div>
+          <div class="stat-value" id="cal-today">—</div>
+          <div class="stat-sub" id="cal-remain" style="color:var(--green)"></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">💧</div>
+          <div class="stat-label">Вода</div>
+          <div class="stat-value" id="water-today">—</div>
+          <div class="stat-sub" id="water-remain" style="color:var(--blue)"></div>
+        </div>
+      </div>
+
+      <!-- КБЖУ прогресс -->
+      <div class="prog-card">
+        <div class="prog-row">
+          <span class="prog-name">Калории</span>
+          <span class="prog-nums" id="cal-prog-nums"></span>
+        </div>
+        <div class="bar-bg"><div class="bar-fill" id="cal-bar" style="background:var(--green);width:0%"></div></div>
+
+        <div class="macro-grid">
+          <div class="macro-item">
+            <div class="macro-dot" style="background:var(--blue)"></div>
+            <div class="macro-val" id="prot-val">—</div>
+            <div class="macro-name">Белки г</div>
+          </div>
+          <div class="macro-item">
+            <div class="macro-dot" style="background:var(--amber)"></div>
+            <div class="macro-val" id="fat-val">—</div>
+            <div class="macro-name">Жиры г</div>
+          </div>
+          <div class="macro-item">
+            <div class="macro-dot" style="background:var(--purple)"></div>
+            <div class="macro-val" id="carb-val">—</div>
+            <div class="macro-name">Углеводы г</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ВОДА -->
+      <div class="water-card">
+        <div class="prog-row">
+          <span class="prog-name">💧 Вода</span>
+          <span class="prog-nums" id="water-nums"></span>
+        </div>
+        <div class="water-drops" id="water-drops"></div>
+        <div class="bar-bg"><div class="bar-fill" id="water-bar" style="background:var(--blue);width:0%"></div></div>
+      </div>
+    </div>
+
+    <!-- НЕДЕЛЯ -->
+    <div class="section">
+      <div class="section-label">Неделя</div>
+      <div class="chart-card">
+        <div class="chart-bars" id="week-bars"></div>
+        <div class="chart-avg" id="week-avg"></div>
+      </div>
+    </div>
+
+    <!-- ДНЕВНИК -->
+    <div class="section">
+      <div class="section-label">Дневник питания</div>
+      <div class="food-list" id="food-list"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- СТРАНИЦА: ПРОФИЛЬ -->
+<div class="page" id="page-profile">
+  <div class="section" style="padding-top:16px;">
+    <div class="section-label">Мои данные</div>
+    <div class="profile-card" id="profile-card">
+      <div class="empty"><div class="emoji">👤</div>Загрузка...</div>
+    </div>
+
+    <div class="section-label" style="margin-top:16px;">Нормы</div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">🔥</div>
+        <div class="stat-label">Калории/день</div>
+        <div class="stat-value" id="prof-cal">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">💧</div>
+        <div class="stat-label">Вода/день</div>
+        <div class="stat-value" id="prof-water">—<span class="stat-unit"> мл</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- СТРАНИЦА: СТАТИСТИКА -->
+<div class="page" id="page-stats">
+  <div class="section" style="padding-top:16px;">
+    <div class="section-label">7 дней — калории</div>
+    <div class="chart-card">
+      <div class="chart-bars" id="stats-bars"></div>
+      <div class="chart-avg" id="stats-avg"></div>
+    </div>
+
+    <div class="section-label" style="margin-top:6px;">Средние макросы</div>
+    <div class="prog-card" id="stats-macros">
+      <div class="empty"><div class="emoji">📊</div>Нет данных</div>
+    </div>
+  </div>
+</div>
+
+<!-- НИЖНЯЯ НАВИГАЦИЯ -->
+<nav class="nav">
+  <button class="nav-btn active" onclick="showPage('home',this)">
+    <span class="nav-icon">🏠</span>
+    <span class="nav-label">Главная</span>
+  </button>
+  <button class="nav-btn" onclick="showPage('stats',this)">
+    <span class="nav-icon">📈</span>
+    <span class="nav-label">Статистика</span>
+  </button>
+  <button class="nav-btn" onclick="showPage('profile',this)">
+    <span class="nav-icon">👤</span>
+    <span class="nav-label">Профиль</span>
+  </button>
+</nav>
+
+<script>
+const tg = window.Telegram?.WebApp;
+if (tg) {
+  tg.ready();
+  tg.expand();
+}
+
+// ── КОНФИГУРАЦИЯ ──────────────────────────────────────────────────────────────
+// Замени на адрес твоего API после деплоя
+const API_BASE = "http://localhost:8000";
+// user_id берётся из Telegram WebApp, или для теста вставь свой
+const USER_ID = tg?.initDataUnsafe?.user?.id || "ТВОЙ_USER_ID";
+
+// ── ДАННЫЕ ────────────────────────────────────────────────────────────────────
+let appData = null;
+
+async function loadData() {
+  try {
+    const res = await fetch(`${API_BASE}/api/dashboard?user_id=${USER_ID}`);
+    if (!res.ok) throw new Error("no data");
+    appData = await res.json();
+    renderAll();
+  } catch(e) {
+    document.getElementById("home-loading").innerHTML =
+      '<div class="empty"><div class="emoji">❌</div>Не удалось загрузить данные.<br>Сначала заполни профиль в боте.</div>';
+  }
+}
+
+// ── РЕНДЕР ────────────────────────────────────────────────────────────────────
+function renderAll() {
+  if (!appData) return;
+  document.getElementById("home-loading").style.display = "none";
+  document.getElementById("home-content").style.display = "block";
+
+  const { user, today, week } = appData;
+
+  // Заголовок
+  document.getElementById("header-sub").textContent =
+    `${user.weight} кг • ${user.height} см • ${user.age} лет`;
+  const goalEl = document.getElementById("header-goal");
+  goalEl.style.display = "inline-block";
+  goalEl.textContent = shortGoal(user.goal);
+
+  // Калории
+  const calPct = Math.min(100, Math.round(today.calories / user.norm_cal * 100));
+  const calRemain = user.norm_cal - today.calories;
+  document.getElementById("cal-today").innerHTML =
+    `${today.calories} <span class="stat-unit">/ ${user.norm_cal}</span>`;
+  document.getElementById("cal-remain").textContent =
+    calRemain > 0 ? `ещё ${calRemain} ккал` : `превышение ${Math.abs(calRemain)} ккал`;
+  document.getElementById("cal-remain").style.color =
+    calRemain > 0 ? "var(--green)" : "var(--red)";
+  document.getElementById("cal-prog-nums").textContent = `${calPct}%`;
+  document.getElementById("cal-bar").style.width = calPct + "%";
+  document.getElementById("cal-bar").style.background =
+    calPct > 100 ? "var(--red)" : "var(--green)";
+
+  // Макросы
+  document.getElementById("prot-val").textContent = today.protein;
+  document.getElementById("fat-val").textContent  = today.fat;
+  document.getElementById("carb-val").textContent = today.carbs;
+
+  // Вода
+  const waterNorm = user.norm_water;
+  const waterMl   = today.water_ml;
+  const waterPct  = Math.min(100, Math.round(waterMl / waterNorm * 100));
+  const dropsTotal = 10;
+  const dropsFill  = Math.round(waterPct / 10);
+  document.getElementById("water-today").innerHTML =
+    `${(waterMl/1000).toFixed(1)} <span class="stat-unit">/ ${(waterNorm/1000).toFixed(1)} л</span>`;
+  const wRemain = waterNorm - waterMl;
+  document.getElementById("water-remain").textContent =
+    wRemain > 0 ? `ещё ${wRemain} мл` : "норма выполнена!";
+  document.getElementById("water-remain").style.color =
+    wRemain > 0 ? "var(--blue)" : "var(--green)";
+  document.getElementById("water-nums").textContent = `${waterMl} / ${waterNorm} мл`;
+  document.getElementById("water-bar").style.width = waterPct + "%";
+
+  // Капли воды
+  let dropsHtml = "";
+  for (let i = 0; i < dropsTotal; i++) {
+    dropsHtml += `<span class="water-drop ${i < dropsFill ? "" : "empty"}">💧</span>`;
+  }
+  document.getElementById("water-drops").innerHTML = dropsHtml;
+
+  // График недели
+  renderWeekChart("week-bars", "week-avg", week, user.norm_cal);
+  renderWeekChart("stats-bars", "stats-avg", week, user.norm_cal);
+
+  // Дневник
+  const foodList = document.getElementById("food-list");
+  if (today.food_log.length === 0) {
+    foodList.innerHTML = '<div class="empty"><div class="emoji">🍽</div>Пока ничего не добавлено</div>';
+  } else {
+    foodList.innerHTML = today.food_log.map(f => `
+      <div class="food-item">
+        <div>
+          <div class="food-name">${f.food}</div>
+          <div class="food-macros">Б ${f.protein}г · Ж ${f.fat}г · У ${f.carbs}г</div>
+        </div>
+        <div class="food-cal">${f.calories} ккал</div>
+      </div>
+    `).join("");
+  }
+
+  // Профиль
+  renderProfile(user);
+
+  // Статистика — средние макросы
+  renderStatsMacros(week);
+}
+
+function renderWeekChart(barsId, avgId, week, norm) {
+  const days = ["пн","вт","ср","чт","пт","сб","вс"];
+  const maxCal = week.length > 0 ? Math.max(...week.map(d => d.calories), norm) : norm;
+  let totalCal = 0;
+
+  // Строим карту дата → данные
+  const map = {};
+  week.forEach(d => { map[d.log_date] = d; totalCal += d.calories; });
+
+  // Последние 7 дней
+  const today = new Date();
+  let barsHtml = "";
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().split("T")[0];
+    const dayName = days[d.getDay() === 0 ? 6 : d.getDay() - 1];
+    const cal = map[key] ? map[key].calories : 0;
+    const pct = maxCal > 0 ? Math.round(cal / maxCal * 100) : 0;
+    const color = cal > norm ? "var(--amber)" : "var(--green)";
+    barsHtml += `
+      <div class="chart-bar-wrap">
+        <div class="chart-bar" style="height:${pct}%; background:${color};"></div>
+        <span class="chart-day">${dayName}</span>
+      </div>`;
+  }
+  document.getElementById(barsId).innerHTML = barsHtml;
+
+  const avg = week.length > 0 ? Math.round(totalCal / week.length) : 0;
+  document.getElementById(avgId).textContent =
+    avg > 0 ? `среднее ${avg} ккал/день` : "нет данных за неделю";
+}
+
+function renderProfile(user) {
+  const goalMap = {
+    "🔥 Похудение": "Похудение",
+    "💪 Набор массы": "Набор массы",
+    "⚖️ Поддержание": "Поддержание"
+  };
+  const actMap = {
+    "🪑 Низкая": "Низкая",
+    "🚶 Средняя": "Средняя",
+    "🏃 Высокая": "Высокая"
+  };
+  const rows = [
+    ["Пол",        user.gender],
+    ["Вес",        user.weight + " кг"],
+    ["Рост",       user.height + " см"],
+    ["Возраст",    user.age + " лет"],
+    ["Цель",       goalMap[user.goal] || user.goal],
+    ["Активность", actMap[user.activity] || user.activity],
+  ];
+  document.getElementById("profile-card").innerHTML =
+    rows.map(([k, v]) => `
+      <div class="profile-row">
+        <span class="profile-key">${k}</span>
+        <span class="profile-val">${v}</span>
+      </div>`).join("");
+
+  document.getElementById("prof-cal").innerHTML =
+    `${user.norm_cal} <span class="stat-unit">ккал</span>`;
+  document.getElementById("prof-water").innerHTML =
+    `${user.norm_water} <span class="stat-unit">мл</span>`;
+}
+
+function renderStatsMacros(week) {
+  if (week.length === 0) return;
+  const avgP = (week.reduce((s,d) => s + d.protein, 0) / week.length).toFixed(1);
+  const avgF = (week.reduce((s,d) => s + d.fat, 0)     / week.length).toFixed(1);
+  const avgC = (week.reduce((s,d) => s + d.carbs, 0)   / week.length).toFixed(1);
+  document.getElementById("stats-macros").innerHTML = `
+    <div class="macro-grid">
+      <div class="macro-item">
+        <div class="macro-dot" style="background:var(--blue)"></div>
+        <div class="macro-val">${avgP}г</div>
+        <div class="macro-name">Белки (ср)</div>
+      </div>
+      <div class="macro-item">
+        <div class="macro-dot" style="background:var(--amber)"></div>
+        <div class="macro-val">${avgF}г</div>
+        <div class="macro-name">Жиры (ср)</div>
+      </div>
+      <div class="macro-item">
+        <div class="macro-dot" style="background:var(--purple)"></div>
+        <div class="macro-val">${avgC}г</div>
+        <div class="macro-name">Углеводы (ср)</div>
+      </div>
+    </div>`;
+}
+
+function shortGoal(goal) {
+  if (!goal) return "";
+  if (goal.includes("Похудение")) return "Похудение";
+  if (goal.includes("Набор"))     return "Набор массы";
+  return "Поддержание";
+}
+
+// ── НАВИГАЦИЯ ─────────────────────────────────────────────────────────────────
+function showPage(name, btn) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("page-" + name).classList.add("active");
+  btn.classList.add("active");
+}
+
+// ── СТАРТ ─────────────────────────────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>
