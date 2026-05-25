@@ -1,5 +1,6 @@
+import os
+from aiohttp import web
 import sqlite3
-import asyncio
 import aiohttp
 import json
 import math
@@ -929,9 +930,29 @@ async def _calculate_and_send(message: Message, data: dict):
 
 # ─── ЗАПУСК ───────────────────────────────────────────────────────────────────
 
+async def handle(request):
+    return web.Response(text="FitBot запущен и работает!")
+
+
 async def main():
     print("FitBot запущен 🚀")
+
+    # Настраиваем мини-сервер для маскировки под сайт
+    app = web.Application()
+    app.router.add_get('/', handle)
+
+    # Запускаем его на порту, который требует Render
+    port = int(os.environ.get("PORT", 5000))
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, '0.0.0.0', port)
+    await site.start()
+
+    # И сразу после этого запускаем самого бота
     await dp.start_polling(bot)
 
+
 if __name__ == "__main__":
+    import asyncio
+
     asyncio.run(main())
