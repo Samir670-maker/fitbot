@@ -19,10 +19,14 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
 
-TOKEN = "8662948232:AAFvZ_IsqedQyM07qPmZxRcgWdXnVoWjabM"
-GROQ_API_KEY = "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"
 
-bot = Bot(token=TOKEN)
+# Получаем токен бота из настроек Render
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
+bot = Bot(token=BOT_TOKEN)
+
+# Получаем токен Groq из настроек Render
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
+
 storage = MemoryStorage()
 dp = Dispatcher(storage=storage)
 
